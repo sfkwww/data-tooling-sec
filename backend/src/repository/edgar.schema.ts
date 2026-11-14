@@ -1,10 +1,21 @@
 import { z } from 'zod';
 
-const tickerSchema = z.object({
-  cik_str: z.int(),
-  ticker: z.string(),
-  title: z.string(),
-});
+/**
+ * EDGAR's `cik_str` is actually a number (320193). We expose it as `cik`, zero-padded to
+ * 10 digits ("0000320193"), the format data.sec.gov expects. sec.gov archive URLs use the
+ * unpadded form: `Number(cik)`.
+ */
+const tickerSchema = z
+  .object({
+    cik_str: z.int(),
+    ticker: z.string(),
+    title: z.string(),
+  })
+  .transform(({ cik_str, ticker, title }) => ({
+    cik: String(cik_str).padStart(10, '0'),
+    ticker,
+    title,
+  }));
 
 export const companyTickersSchema = z.record(z.coerce.number().int(), tickerSchema);
 
@@ -33,7 +44,6 @@ const recentFilingsSchema = z.object({
   primaryDocument: z.array(z.string()),
   primaryDocDescription: z.array(z.string()),
 });
-
 
 // We only use recent filings for now
 export const submissionsSchema = z.object({
