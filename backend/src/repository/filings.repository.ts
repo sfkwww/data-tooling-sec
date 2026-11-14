@@ -1,3 +1,4 @@
+import { memoize } from 'es-toolkit';
 import {
   type CompanyTickers,
   companyTickersSchema,
@@ -15,10 +16,11 @@ export const createFilingsRepository = (userAgent: string) => {
     return res.json();
   };
 
-  // TODO: Cache the ticker file in memory
-  function getCompanyTickers(): Promise<CompanyTickers> {
-    return fetchJson(TICKERS_URL).then(companyTickersSchema.parse);
-  }
+  // Fetched once per server start; the promise is cached, so concurrent calls share one request.
+  // TODO: Expire daily and don't cache a failed fetch. This is used for now for simplicity
+  const getCompanyTickers = memoize((): Promise<CompanyTickers> =>
+    fetchJson(TICKERS_URL).then((data) => companyTickersSchema.parse(data)),
+  );
 
   /** `cik` must be zero-padded to 10 digits. */
   function getSubmissions(cik: string): Promise<Submissions> {

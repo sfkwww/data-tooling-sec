@@ -75,6 +75,9 @@ export const filingsQuerySchema = z.object({
     // Allow form types not defined in the enum
     .pipe(z.array(z.enum(FormType).or(z.string()))),
   sort: z.enum(SortOrder).default(SortOrder.DESC),
+  /** 1-based. Query params are strings, so coerce to numbers. */
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });
 
 export type FilingsQuery = z.infer<typeof filingsQuerySchema>;
@@ -102,3 +105,20 @@ export const filingSchema = z.object({
 });
 
 export type Filing = z.infer<typeof filingSchema>;
+
+export const paginationSchema = z.object({
+  page: z.int(),
+  pageSize: z.int(),
+  /** Number of filings after filtering, across all pages. */
+  totalItems: z.int(),
+  totalPages: z.int(),
+});
+
+/** GET /companies/:ticker/filings */
+export const filingsPageSchema = z.object({
+  data: z.array(filingSchema),
+  pagination: paginationSchema,
+});
+
+export type Pagination = z.infer<typeof paginationSchema>;
+export type FilingsPage = z.infer<typeof filingsPageSchema>;

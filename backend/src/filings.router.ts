@@ -5,6 +5,5 @@ import { filingsQuerySchema } from './sec.schema.js';
 export const createFilingsRouter = (service: FilingsService) =>
   Router().get('/companies/:ticker/filings', async (req, res) => {
     const query = filingsQuerySchema.parse(req.query);
-    const filings = await service.getFilings(req.params.ticker, query);
-    res.json({ data: filings });
+    res.json(await service.getFilings(req.params.ticker, query));
   });
