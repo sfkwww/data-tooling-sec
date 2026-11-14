@@ -1,4 +1,4 @@
-import { AppBar, Container, Toolbar, Typography } from '@mui/material';
+import { AppBar, Button, Container, Toolbar, Typography } from '@mui/material';
 import type { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Link, Outlet, createRootRouteWithContext } from '@tanstack/react-router';
@@ -25,6 +25,9 @@ function RootLayout() {
           >
             SEC Filings
           </Typography>
+          <Button component={Link} to="/summary" color="inherit" sx={{ ml: 3 }}>
+            Summary
+          </Button>
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg" sx={{ py: 3 }}>

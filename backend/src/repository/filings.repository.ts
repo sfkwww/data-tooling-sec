@@ -22,10 +22,16 @@ export const createFilingsRepository = (userAgent: string) => {
     fetchJson(TICKERS_URL).then((data) => companyTickersSchema.parse(data)),
   );
 
-  /** `cik` must be zero-padded to 10 digits. */
-  function getSubmissions(cik: string): Promise<Submissions> {
-    return fetchJson(`${SUBMISSIONS_BASE_URL}/CIK${cik}.json`).then(submissionsSchema.parse);
-  }
+  /**
+   * `cik` must be zero-padded to 10 digits. Cached per CIK (memoize keys on the first argument),
+   * so paging/filtering doesn't refetch from EDGAR.
+   * TODO: Same as tickers: expire (new filings appear over the day) and don't cache failures.
+   */
+  const getSubmissions = memoize((cik: string): Promise<Submissions> =>
+    fetchJson(`${SUBMISSIONS_BASE_URL}/CIK${cik}.json`).then((data) =>
+      submissionsSchema.parse(data),
+    ),
+  );
 
   return {
     getCompanyTickers,
