@@ -62,9 +62,19 @@ export enum SortOrder {
 }
 
 export const filingsQuerySchema = z.object({
-  // Allow form types not defined in the enum
-  forms: z.array(z.enum(FormType).or(z.string())),
-  sort: z.enum(SortOrder),
+  /** Comma-separated, e.g. `?form=10-K,8-K`. Case-insensitive. Omitted = all forms. */
+  form: z
+    .string()
+    .optional()
+    .transform((value) =>
+      (value ?? '')
+        .split(',')
+        .map((form) => form.trim().toUpperCase())
+        .filter(Boolean),
+    )
+    // Allow form types not defined in the enum
+    .pipe(z.array(z.enum(FormType).or(z.string()))),
+  sort: z.enum(SortOrder).default(SortOrder.DESC),
 });
 
 export type FilingsQuery = z.infer<typeof filingsQuerySchema>;

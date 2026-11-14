@@ -5,7 +5,7 @@ import type { Filing, FilingsQuery } from './sec.schema.js';
 import { notFound } from './utils/http-error.js';
 
 export const createFilingsService = (repository: FilingsRepository) => ({
-  getFilings: async (ticker: string, { forms, sort }: FilingsQuery): Promise<Filing[]> => {
+  getFilings: async (ticker: string, { form, sort }: FilingsQuery): Promise<Filing[]> => {
     const tickers = await repository.getCompanyTickers();
     const matchedCompany = Object.values(tickers).find(
       (company) => company.ticker === ticker.toUpperCase(),
@@ -15,7 +15,7 @@ export const createFilingsService = (repository: FilingsRepository) => ({
     const submissions = await repository.getSubmissions(matchedCompany.cik);
 
     const filings = submissionsToRecentFilings(submissions);
-    const filtered = forms.length === 0 ? filings : filings.filter((f) => forms.includes(f.form));
+    const filtered = form.length === 0 ? filings : filings.filter((f) => form.includes(f.form));
     return orderBy(filtered, ['filingDate'], [sort]);
   },
 });
