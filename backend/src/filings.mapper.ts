@@ -20,6 +20,7 @@ export function submissionsToRecentFilings(submissions: Submissions): Filing[] {
     isXBRLNumeric,
     primaryDocument,
     primaryDocDescription,
+    url,
   } = submissions.filings.recent;
 
   return accessionNumber.map((accessionNumber, i) => ({
@@ -39,5 +40,6 @@ export function submissionsToRecentFilings(submissions: Submissions): Filing[] {
     isXBRLNumeric: isXBRLNumeric[i] ?? null,
     primaryDocument: primaryDocument[i] ?? '',
     primaryDocDescription: primaryDocDescription[i] ?? '',
+    url: url[i] ?? '',
   }));
 }

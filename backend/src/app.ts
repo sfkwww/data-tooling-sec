@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express, { type Express } from 'express';
 import type { FilingsRepository } from './repository/filings.repository.js';
-import { createFilingsRouter } from './filings.router';
+import { createFilingsRouter } from './filings.router.js';
 import { createFilingsService } from './filings.service.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 

@@ -45,12 +45,37 @@ const recentFilingsSchema = z.object({
   primaryDocDescription: z.array(z.string()),
 });
 
+const ARCHIVES_BASE_URL = 'https://www.sec.gov/Archives/edgar/data';
+
+/**
+ * Link to a filing's primary document on sec.gov, e.g.
+ * https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/aapl-20260926.htm
+ * Archive paths use the unpadded CIK and the accession number without dashes.
+ */
+const toDocumentUrl = (cik: string, accessionNumber: string, primaryDocument: string) =>
+  `${ARCHIVES_BASE_URL}/${String(Number(cik))}/${accessionNumber.replaceAll('-', '')}/${primaryDocument}`;
+
 // We only use recent filings for now
-export const submissionsSchema = z.object({
-  filings: z.object({
-    recent: recentFilingsSchema,
-  }),
-});
+export const submissionsSchema = z
+  .object({
+    /** The company's own zero-padded CIK, e.g. "0000320193". */
+    cik: z.string(),
+    filings: z.object({
+      recent: recentFilingsSchema,
+    }),
+  })
+  // Adds a `url` column next to the other columns, so the mapper can treat it like any field.
+  .transform(({ cik, filings: { recent } }) => ({
+    cik,
+    filings: {
+      recent: {
+        ...recent,
+        url: recent.accessionNumber.map((accessionNumber, i) =>
+          toDocumentUrl(cik, accessionNumber, recent.primaryDocument[i] ?? ''),
+        ),
+      },
+    },
+  }));
 
 export type RecentFilings = z.infer<typeof recentFilingsSchema>;
 export type Submissions = z.infer<typeof submissionsSchema>;

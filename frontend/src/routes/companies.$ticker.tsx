@@ -1,6 +1,7 @@
 import {
   Alert,
   CircularProgress,
+  Link,
   Paper,
   Stack,
   Table,
@@ -54,8 +55,11 @@ function CompanyFilingsPage() {
                   <TableCell>{f.filingDate}</TableCell>
                   <TableCell>{f.form}</TableCell>
                   <TableCell>{f.primaryDocDescription || '—'}</TableCell>
-                  {/* TODO: link to sec.gov once the backend returns a document URL */}
-                  <TableCell>{f.primaryDocument}</TableCell>
+                  <TableCell>
+                    <Link href={f.url} target="_blank" rel="noreferrer">
+                      {f.primaryDocument}
+                    </Link>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

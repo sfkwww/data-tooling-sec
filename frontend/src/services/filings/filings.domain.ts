@@ -18,6 +18,8 @@ export const filingSchema = z.object({
   isXBRLNumeric: z.int().nullable(),
   primaryDocument: z.string(),
   primaryDocDescription: z.string(),
+  /** Primary document on sec.gov */
+  url: z.url(),
 });
 
 /** GET /companies/:ticker/filings */
