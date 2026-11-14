@@ -6,7 +6,7 @@ import { z } from 'zod';
  * Form types that can be filtered on. EDGAR has hundreds; this is the subset people care about.
  * Amendments are separate form types (`10-K/A`), so they're listed explicitly.
  */
-enum FormType {
+export enum FormType {
   // Periodic & current reports (US issuers)
   K10 = '10-K',
   K10_A = '10-K/A',
@@ -61,19 +61,20 @@ export enum SortOrder {
   DESC = 'desc',
 }
 
+/** Query param list: `"aapl, spot,"` → `["AAPL", "SPOT"]`. Pipe into an array schema to validate. */
+const commaSeparatedList = z.string().transform((value) =>
+  value
+    .split(',')
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean),
+);
+
 export const filingsQuerySchema = z.object({
   /** Comma-separated, e.g. `?form=10-K,8-K`. Case-insensitive. Omitted = all forms. */
-  form: z
-    .string()
-    .optional()
-    .transform((value) =>
-      (value ?? '')
-        .split(',')
-        .map((form) => form.trim().toUpperCase())
-        .filter(Boolean),
-    )
+  form: commaSeparatedList
     // Allow form types not defined in the enum
-    .pipe(z.array(z.enum(FormType).or(z.string()))),
+    .pipe(z.array(z.enum(FormType).or(z.string())))
+    .default([]),
   sort: z.enum(SortOrder).default(SortOrder.DESC),
   /** 1-based. Query params are strings, so coerce to numbers. */
   page: z.coerce.number().int().min(1).default(1),
@@ -122,3 +123,36 @@ export const filingsPageSchema = z.object({
 
 export type Pagination = z.infer<typeof paginationSchema>;
 export type FilingsPage = z.infer<typeof filingsPageSchema>;
+
+export const summaryQuerySchema = z.object({
+  /**
+   * Comma-separated, e.g. `?tickers=AAPL,SPOT`. Case-insensitive.
+   * Max 10: each ticker is one EDGAR request, and EDGAR allows 10 requests/second.
+   */
+  tickers: commaSeparatedList.pipe(z.array(z.string()).min(1).max(10)),
+});
+
+export type SummaryQuery = z.infer<typeof summaryQuerySchema>;
+
+/** Forms that count as an annual report: 10-K, or 20-F / 40-F for foreign companies. */
+export const annualReportSchema = z.object({
+  form: z.enum([FormType.K10, FormType.F20, FormType.F40]),
+  filingDate: z.string(),
+});
+
+export const companySummarySchema = z.object({
+  ticker: z.string(),
+  /** Filings per form type over the last 12 months, e.g. `{ "8-K": 9, "10-Q": 3 }`. */
+  formCounts: z.record(z.string(), z.int()),
+  /** Latest 10-K; falls back to the latest 20-F or 40-F. Amendments (10-K/A) don't count. */
+  latestAnnualReport: annualReportSchema.nullable(),
+});
+
+/** GET /filings/summary */
+export const summarySchema = z.object({
+  data: z.array(companySummarySchema),
+});
+
+export type AnnualReport = z.infer<typeof annualReportSchema>;
+export type CompanySummary = z.infer<typeof companySummarySchema>;
+export type Summary = z.infer<typeof summarySchema>;
